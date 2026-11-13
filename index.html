@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluación de Salida - Matemática</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .radio-v, .radio-f { appearance: none; width: 1.5rem; height: 1.5rem; border: 2px solid #cbd5e1; border-radius: 50%; cursor: pointer; position: relative; }
+        .radio-v:checked { border-color: #10b981; background-color: #10b981; }
+        .radio-f:checked { border-color: #f43f5e; background-color: #f43f5e; }
+        .radio-v:checked::after, .radio-f:checked::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 0.5rem; height: 0.5rem; border-radius: 50%; background: white; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 p-4 md:p-6">
+
+    <div class="max-w-4xl mx-auto space-y-6 relative">
+        
+        <!-- PANTALLA 1: REGISTRO -->
+        <div id="screen-register" class="bg-white rounded-3xl p-8 shadow-xl border border-slate-200 fade-in">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-extrabold text-indigo-900 mb-2">EVALUACIÓN DE SALIDA - MATEMÁTICA</h1>
+                <p class="text-slate-500 font-medium">Completa tus datos para iniciar la prueba.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">GRADO</label>
+                    <select id="sel-grado" onchange="resetLista()" class="w-full p-4 bg-slate-50 border-2 border-slate-200 rounded-xl font-bold outline-none focus:border-indigo-500">
+                        <option value="">Selecciona tu grado</option>
+                        <option value="1">1.º Grado</option>
+                        <option value="2">2.º Grado</option>
+                        <option value="3">3.º Grado</option>
+                        <option value="4">4.º Grado</option>
+                        <option value="5">5.º Grado</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">SECCIÓN</label>
+                    <select id="sel-seccion" onchange="resetLista()" class="w-full p-4 bg-slate-50 border-2 border-slate-200 rounded-xl font-bold outline-none focus:border-indigo-500">
+                        <option value="">Selecciona tu sección</option>
+                        <option value="A">Sección A</option>
+                        <option value="B">Sección B</option>
+                        <option value="C">Sección C</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button onclick="buscarAlumnas()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-xl transition shadow-md mb-4">
+                🔍 Cargar Lista de Estudiantes
+            </button>
+            
+            <div id="status-msg" class="text-center text-sm font-bold text-indigo-600 hidden mb-4">Buscando...</div>
+            
+            <div id="container-nombre" class="hidden fade-in space-y-6">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">SELECCIONA TU NOMBRE</label>
+                    <select id="sel-nombre" class="w-full p-4 bg-white border-2 border-indigo-200 rounded-xl font-bold outline-none focus:border-indigo-600"></select>
+                </div>
+                <button onclick="mostrarBienvenida()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-lg py-4 rounded-xl transition shadow-lg">
+                    Continuar →
+                </button>
+            </div>
+        </div>
+
+        <!-- PANTALLA 2: BIENVENIDA Y MOTIVACIÓN -->
+        <div id="screen-welcome" class="hidden bg-white rounded-3xl p-10 text-center shadow-xl border border-slate-200 fade-in">
+            <div class="text-6xl mb-6">💡</div>
+            <h2 class="text-3xl font-extrabold text-slate-800 mb-4">¡Bienvenida!</h2>
+            <p class="text-lg text-slate-600 mb-6 max-w-2xl mx-auto">
+                Estás a punto de comenzar tu Evaluación de Salida. Tienes todo el conocimiento necesario para resolver estas situaciones. Confía en tu proceso y lee con mucha atención.
+            </p>
+            <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 mb-8 text-left inline-block max-w-md mx-auto">
+                <ul class="space-y-3 text-slate-700 font-medium">
+                    <li>⏱️ Tienes un tiempo máximo de <strong>90 minutos</strong>. No te preocupes, la información se guardará.</li>
+                    <li>📖 Puedes consultar la información de cada situación dando clic al botón superior de cada pregunta.</li>
+                    <li>💾 Tus respuestas quedarán registradas automáticamente al finalizar.</li>
+                </ul>
+            </div>
+            <br>
+            <button onclick="iniciarExamen()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xl py-4 px-12 rounded-full transition shadow-lg transform hover:scale-105">
+                Empezar Evaluación
+            </button>
+        </div>
+
+        <!-- PANTALLA 3: EXAMEN Y TEMPORIZADOR -->
+        <div id="screen-exam" class="hidden relative">
+            <div class="sticky top-4 z-40 bg-white/90 backdrop-blur shadow-md rounded-2xl p-4 border border-slate-200 flex justify-between items-center mb-6">
+                <div>
+                    <span class="text-xs font-bold text-slate-500 block uppercase tracking-wider">Estudiante</span>
+                    <span id="exam-student-name" class="font-black text-indigo-900"></span>
+                </div>
+                <div class="flex items-center gap-3 bg-slate-900 text-white px-5 py-2 rounded-xl shadow-inner">
+                    <span class="text-sm font-bold uppercase tracking-widest text-slate-400">Tiempo</span>
+                    <span id="timer-display" class="font-mono text-2xl font-black">90:00</span>
+                </div>
+            </div>
+
+            <!-- Contenedor dinámico de Preguntas -->
+            <div id="questions-container" class="space-y-6"></div>
+
+            <div class="mt-8 pb-10">
+                <button onclick="finalizarExamen(false)" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xl py-5 rounded-2xl shadow-xl transition transform hover:-translate-y-1">
+                    📤 Enviar mis respuestas
+                </button>
+            </div>
+        </div>
+
+        <!-- PANTALLA 4: DESPEDIDA -->
+        <div id="screen-end" class="hidden bg-white rounded-3xl p-12 text-center shadow-xl border border-slate-200 fade-in">
+            <div class="text-6xl mb-6">✅</div>
+            <h2 class="text-3xl font-extrabold text-slate-800 mb-2">¡Evaluación Completada!</h2>
+            <p class="text-lg text-slate-600 mb-6">Tus respuestas han sido enviadas y registradas correctamente en la base de datos.</p>
+            <p class="text-sm font-bold text-indigo-600 bg-indigo-50 inline-block px-4 py-2 rounded-lg" id="status-end-msg">Procesando...</p>
+        </div>
+    </div>
+
+    <!-- MODAL DE SITUACIONES (VENTANA EMERGENTE) -->
+    <div id="situation-modal" class="fixed inset-0 z-[100] hidden bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 fade-in">
+        <div class="bg-white w-full max-w-3xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+            <div class="bg-indigo-600 px-6 py-4 flex justify-between items-center">
+                <h3 id="modal-title" class="text-white font-bold text-xl">Situación</h3>
+                <button onclick="cerrarSituacion()" class="text-indigo-100 hover:text-white font-black text-3xl leading-none">&times;</button>
+            </div>
+            <div id="modal-content" class="p-6 md:p-8 overflow-y-auto flex-1 text-slate-700 space-y-4 text-base md:text-lg">
+                <!-- Contenido inyectado dinámicamente -->
+            </div>
+            <div class="bg-slate-100 px-6 py-4 border-t border-slate-200 text-right">
+                <button onclick="cerrarSituacion()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-8 rounded-xl transition shadow-md">Cerrar y responder</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN (REEMPLAZAR CON TU URL DE SCRIPT.GOOGLE.COM)
+        const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbz-QBjkOowUip-FjvWjsqXd9qkFI6j48Ur_LCyFCa-Dq775OjcAybrsRUUnfjry5kJv/exec";
+        
+        let studentData = {};
+        let userAnswers = {};
+        let timerInterval;
+        let timeLeft = 90 * 60; // 90 minutos
+
+        // BASE DE DATOS DE CONTEXTOS Y LECTURAS
+        const situationsData = {
+            1: {
+                title: "Situación 1: Arrendamiento agrícola",
+                content: `<p class="font-bold text-indigo-900 mb-2">Lee atentamente la siguiente información:</p><p>Algunas comunidades rurales desean arrendar tierras agrícolas. Para cubrir los gastos iniciales, solicitan un préstamo a una entidad financiera bajo la modalidad de interés simple:</p><ul class="list-disc pl-6 my-4 font-bold text-slate-800 space-y-2"><li>Comunidad A: S/ 12 000 al 8% anual durante 4 años.</li><li>Comunidad B: S/ 18 000 al 8% anual durante 2 años.</li></ul><p>La municipalidad establece un costo anual de arrendamiento de <strong>S/ 2500 por hectárea</strong> para el cultivo de kiwicha.</p><p class="mt-4">Se aplican dos descuentos sucesivos sobre el costo total del arrendamiento:</p><ul class="list-disc pl-6 my-2 font-medium"><li>Primer descuento: 25% sobre el costo total.</li><li>Segundo descuento: 20% adicional, aplicado sobre el monto ya descontado.</li></ul>`
+            },
+            2: {
+                title: "Situación 2: Diseños en tejidos",
+                content: `<p>Un diseñador elabora una estructura decorativa basada en figuras geométricas. Sobre la estructura se incrustan piedras de colores (grises y blancas) siguiendo un patrón específico.</p><div class="w-full bg-slate-100 border-2 border-dashed border-slate-300 rounded-xl p-10 text-center my-4"><span class="text-4xl block mb-2">🖼️</span><p class="font-bold text-slate-600">Representación del Diseño</p><p class="text-sm text-slate-500">(Puedes colocar aquí la imagen de los diseños reemplazando este div por una etiqueta &lt;img&gt; en el código HTML).</p></div>`
+            },
+            3: {
+                title: "Situación 3: Jóvenes emprendedores",
+                content: `<p>Se desarrolla un proyecto en un <strong>terreno de 2,4 hectáreas (ha)</strong>:</p><ul class="list-disc pl-6 my-4 font-medium space-y-2"><li>Se destina <strong>3/5</strong> del terreno total a la espinaca.</li><li>Del área restante, se asigna el <strong>40%</strong> a lechuga.</li><li>Del terreno que queda, la mitad es para culantro.</li><li>El resto es para animales de corral.</li></ul><p><strong>Consumo de agua por año:</strong></p><ul class="list-disc pl-6 font-medium"><li>Espinaca: 1,2 × 10⁸ L/ha</li><li>Lechuga: 4,8 × 10⁷ L/ha</li></ul><p class="mt-2 text-indigo-700 font-bold">Dato: El precio del agua es S/2,5 por m³ (1 m³ = 1000 litros).</p>`
+            },
+            4: {
+                title: "Situación 4: La leche y su aporte nutricional",
+                content: `<p class="mb-4"><strong>Requerimiento de Proteína:</strong><br>- Sedentario (No hace ejercicio): 0,8 g por kg/día.<br>- Ejercicio moderado: 1,2 g por kg/día.<br>- Ejercicio intenso: 1,6 g por kg/día.</p><div class="border-4 border-slate-900 p-5 bg-white"><h3 class="font-black text-xl border-b-4 border-slate-900 pb-2 mb-2">INFORMACIÓN NUTRICIONAL</h3><div class="flex justify-between font-bold text-sm border-b-4 border-slate-900 pb-1 mb-2"><span>VALORES MEDIOS</span><span>por 100 mL</span></div><table class="w-full text-sm font-medium"><tr class="border-b border-slate-300"><td class="py-1">Energía</td><td class="text-right">264 kJ / 63 kcal</td></tr><tr class="border-b border-slate-300"><td class="py-1">Grasas</td><td class="text-right">3,6 g</td></tr><tr class="border-b border-slate-300"><td class="py-1 pl-4 text-slate-500">- saturadas</td><td class="text-right">2,4 g</td></tr><tr class="border-b border-slate-300"><td class="py-1">Hidratos de carbono</td><td class="text-right">4,6 g</td></tr><tr class="border-b border-slate-300"><td class="py-1 font-bold">Proteínas</td><td class="text-right font-bold text-lg">3,1 g</td></tr><tr class="border-b-4 border-slate-900"><td class="py-1">Calcio</td><td class="text-right">110 mg</td></tr></table></div>`
+            },
+            5: {
+                title: "Situación 5: Precios en tiendas tecnológicas",
+                content: `<p class="mb-4 font-medium">Condiciones de 3 tiendas distintas para equipos de la misma marca:</p><ul class="list-disc pl-6 space-y-4"><li><strong>Electro Max:</strong> Laptop S/4100 | Computadora S/3500.<br><span class="text-indigo-600 font-bold">Descuento 20%. Adicional CrediAmigo: 15%.</span></li><li><strong>Tecno Mundo:</strong> Laptop S/4150 | Computadora S/3500.<br><span class="text-indigo-600 font-bold">Descuento 30%. Adicional CrediAmigo: 5%.</span></li><li><strong>Globaltic:</strong> Laptop S/4180 | Computadora S/3750 | Monitor S/1200.<br><span class="text-indigo-600 font-bold">Descuento 15%. Adicional CrediAmigo: 8%.</span></li></ul><p class="text-sm italic">Los descuentos adicionales se aplican siempre sobre el monto ya descontado por el primer descuento.</p>`
+            },
+            6: {
+                title: "Situación 6: Compra de cajas",
+                content: `<p>Una fábrica distribuye sus cubos. Los envía dentro de cajas medianas o grandes para que se llenen por completo.</p><table class="w-full text-center border-collapse border border-slate-300 mt-4"><tr class="bg-slate-200 font-bold"><th class="border border-slate-300 p-2">Tipo de caja</th><th class="border border-slate-300 p-2">Pequeña</th><th class="border border-slate-300 p-2">Mediana</th><th class="border border-slate-300 p-2">Grande</th></tr><tr><td class="border border-slate-300 p-2 font-bold bg-slate-50">Costo (S/)</td><td class="border border-slate-300 p-2">0,10</td><td class="border border-slate-300 p-2">0,25</td><td class="border border-slate-300 p-2">0,50</td></tr><tr><td class="border border-slate-300 p-2 font-bold bg-slate-50">N° de cubos</td><td class="border border-slate-300 p-2">1</td><td class="border border-slate-300 p-2">8</td><td class="border border-slate-300 p-2">27</td></tr></table>`
+            },
+            7: {
+                title: "Situación 7: Tarifas de pago en Sedapal",
+                content: `<p>Una empresa aplica tarifas progresivas por tramos (aplicado acumulativamente según consumo).</p><table class="w-full text-center border-collapse border border-slate-300 mt-4"><tr class="bg-indigo-100 font-bold"><th class="border border-slate-300 p-2">Tramo</th><th class="border border-slate-300 p-2">Rango (m³)</th><th class="border border-slate-300 p-2">Tarifa unitaria (S/ por m³)</th></tr><tr><td class="border border-slate-300 p-2">Tramo 1</td><td class="border border-slate-300 p-2">0 - 10</td><td class="border border-slate-300 p-2 text-indigo-700 font-bold">2,20</td></tr><tr><td class="border border-slate-300 p-2">Tramo 2</td><td class="border border-slate-300 p-2">Más de 10 hasta 20</td><td class="border border-slate-300 p-2 text-indigo-700 font-bold">2,36</td></tr><tr><td class="border border-slate-300 p-2">Tramo 3</td><td class="border border-slate-300 p-2">Más de 20 hasta 50</td><td class="border border-slate-300 p-2 text-indigo-700 font-bold">3,22</td></tr><tr><td class="border border-slate-300 p-2">Tramo 4</td><td class="border border-slate-300 p-2">Más de 50</td><td class="border border-slate-300 p-2 text-indigo-700 font-bold">7,32</td></tr></table><p class="mt-4 font-bold text-rose-600">Además del costo variable, el recibo incluye un cargo fijo mensual de S/ 6,25.</p>`
+            },
+            8: {
+                title: "Situación 8: Diseño de logotipo",
+                content: `<p>Un diseñador gráfico crea un logotipo representado por la figura P en el plano cartesiano.</p><ul class="list-disc pl-6 my-4 font-medium space-y-2"><li>La figura A se obtiene al reflejar la figura P respecto de la recta y = 1.</li><li>La figura B se obtiene al rotar la figura P 90° en sentido horario alrededor del punto (-1,1).</li></ul><div class="w-full bg-slate-100 border-2 border-dashed border-slate-300 rounded-xl p-10 text-center my-4"><span class="text-4xl block mb-2">📈</span><p class="font-bold text-slate-600">Representación del Plano Cartesiano</p><p class="text-sm text-slate-500">Aquí se observan las coordenadas de la Figura P y Q. (Sustituir con la imagen en código final)</p></div>`
+            }
+        };
+
+        // PREGUNTAS DEL EXAMEN
+        const questionsData = [
+            { id: 1, type: "mc", situation: 1, text: "Si IA corresponde al interés simple que pagará la comunidad A, ¿cuál es la expresión correcta para determinarlo?", options: ["A) IA = 12 000 × 8 × 4", "B) IA = 12 000 + 0,08 × 4", "C) IA = 12 000(0,08 + 4)", "D) IA = 12 000 × 0,08 × 4"] },
+            { id: 2, type: "mc", situation: 1, text: "El costo inicial es S/10 000. ¿Cuál es el monto final luego de aplicar sucesivamente un descuento del 25% y después otro del 20% sobre el precio ya reducido?", options: ["A) S/ 5 500", "B) S/ 7 500", "C) S/ 6 000", "D) S/ 8 000"] },
+            { id: 3, type: "mc", situation: 1, text: "Analizando la gráfica de interés simple de las comunidades A y B. ¿Qué afirmación es correcta?", customHtml: "<canvas id='chartQ3' height='200'></canvas>", options: ["A) La recta de la comunidad B presenta mayor pendiente, pues genera más interés por año.", "B) En el segundo año, ambas comunidades registran el mismo interés acumulado.", "C) La diferencia entre los intereses acumulados disminuye con el tiempo.", "D) La comunidad A pagará más al finalizar los 4 años."] },
+            { id: 4, type: "vf", situation: 1, text: "Un agricultor accede a dos descuentos (25% y 20%). Indica V o F en las siguientes afirmaciones:", statements: ["Para calcular el costo final por arrendamiento, es correcto sumar los porcentajes (25% + 20% = 45%) y aplicar ese total al precio inicial.", "Si se invierte el orden de aplicación de los descuentos (20% y luego 25%), el monto final varía."] },
+            { id: 5, type: "open", situation: 2, text: "En los diseños de tejidos, ¿Cuál será el total de piedras blancas y grises que se necesitarán para elaborar el Diseño 5? (Ingresa solo el número final)." },
+            { id: 6, type: "vf", situation: 2, text: "Respecto al crecimiento de las piedras en los tejidos:", statements: ["El total de piedras no sigue un crecimiento lineal, ya que la cantidad que aumenta no es constante.", "A partir del diseño 3, la cantidad de piedras blancas aumenta en la misma cantidad que las piedras grises."] },
+            { id: 7, type: "mc", situation: 3, text: "Se destina 3/5 de un terreno de 2,4 ha a espinaca. Del área restante, se asigna el 40% a lechuga. ¿Qué expresión representa las hectáreas de lechuga?", options: ["A) 2,4 × 0,4", "B) 2,4 × (3/5)", "C) (2,4 - 1,44) × 0,4", "D) 2,4 × (3/5) × 0,4"] },
+            { id: 8, type: "mc", situation: 3, text: "¿Cuál es el costo total anual para el cultivo de espinaca expresado en notación científica si consume 1,2 × 10⁸ L y cuesta S/2,5 por m³?", options: ["A) 4,32 × 10⁵ soles", "B) 4,32 × 10⁷ soles", "C) 3,00 × 10⁵ soles", "D) 43,2 × 10⁴ soles"] },
+            { id: 9, type: "mc", situation: 4, text: "Un adolescente de 55,5 kg (sedentario) consumió 12,5 g de proteína y 16,25 g. Si requiere 0,8 g/kg/día, ¿cuánta proteína debe consumir en la cena?", options: ["A) 15,65 g", "B) 15,75 g", "C) 21,65 g", "D) 44,4 g"] },
+            { id: 10, type: "mc", situation: 4, text: "Un deportista obtiene 375 g de proteína. ¿Cuál es su equivalente en kilogramos?", options: ["A) 3,75 kg", "B) 0,375 kg", "C) 37,5 kg", "D) 0,0375 kg"] },
+            { id: 11, type: "vf", situation: 4, text: "Observando la etiqueta de la leche:", statements: ["En 100 mL, la cantidad de vitamina A (0,165 mg) es mayor que la de vitamina B2 (0,18 mg).", "0,13 g de sal es una cantidad menor que 110 mg de sal."] },
+            { id: 12, type: "open", situation: 4, text: "La leche contiene 4,6 g de hidratos por cada 100 mL. ¿Cuántos gramos se consumen al ingerir 450 mL? (Escribe el valor numérico)." },
+            { id: 13, type: "mc", situation: 5, text: "¿Qué opción es más conveniente para comprar Laptop y Computadora?", options: ["A) Comprar ambos en Tecno Mundo (S/ 5087,25)", "B) Comprar ambos en Electro Max (S/ 5168,00)", "C) Laptop en Electro Max y Computadora en Tecno Mundo", "D) Laptop en Globaltic y Computadora en Electro Max"] },
+            { id: 14, type: "mc", situation: 5, text: "El precio de un monitor es S/ 1200. Tiene descuento de 15% y adicional de 8%. El precio final correcto es:", options: ["A) S/ 938,40", "B) S/ 924,00", "C) S/ 1005,60", "D) S/ 240,00"] },
+            { id: 15, type: "mc", situation: 5, text: "Al aplicar un descuento de 20% y luego 15% adicional con tarjeta:", options: ["A) El porcentaje de descuento total es menor que 35%.", "B) Se debe sumar para hacer un único 35%.", "C) Tanto el 20% y 15% se aplican directo al original.", "D) El descuento final es exactamente 35%."] },
+            { id: 16, type: "open", situation: 5, text: "¿Es correcta la afirmación 'El precio final es igual porque ambas suman 35%'? Escribe SÍ o NO, seguido de tu justificación." },
+            { id: 17, type: "mc", situation: 6, text: "Se utilizaron 15 cajas grandes y 4 medianas. ¿Con qué combinaciones de monedas se paga exactamente el costo total?", options: ["A) 2 de S/2, 2 de S/1, 3 de S/0.50", "B) 2 de S/2, 3 de S/1, 7 de S/0.50", "C) 1 de S/5, 1 de S/1, 5 de S/0.50", "D) 1 de S/5, 2 de S/1, 3 de S/0.50"] },
+            { id: 18, type: "mc", situation: 7, text: "Para un consumo de agua de 35 m³, la expresión matemática del costo es:", options: ["A) (10×2,20) + (10×2,36) + (15×3,22) + 6,25", "B) (35×3,22) + 6,25", "C) (20×2,36) + (15×3,22) + 6,25", "D) (35×2,20) + 6,25"] },
+            { id: 19, type: "mc", situation: 7, text: "¿Qué representación de intervalos describe correctamente el Tramo 3 (Más de 20 hasta 50)?", options: ["A) [20, 50]", "B) (20, 50]", "C) [20, 50)", "D) (20, 50)"] },
+            { id: 20, type: "mc", situation: 7, text: "Analizando la gráfica del costo total por metros cúbicos de agua. ¿Qué conclusión es correcta?", customHtml: "<canvas id='chartQ20' height='200'></canvas>", options: ["A) Ambos tramos tienen misma pendiente.", "B) El tramo 2 presenta mayor pendiente que el 1, indicando mayor costo por m³ adicional.", "C) El tramo 1 tiene mayor pendiente.", "D) El costo deja de depender del consumo en el tramo 2."] },
+            { id: 21, type: "mc", situation: 8, text: "La figura A se obtiene al reflejar P en la recta y=1. ¿Qué describe el efecto de esta transformación?", options: ["A) Cambia de tamaño, pero conserva completamente su forma.", "B) Conserva forma y tamaño, pero cambia su posición al reflejarse.", "C) Rota 90 grados alrededor del origen.", "D) Se traslada verticalmente una unidad."] },
+            { id: 22, type: "vf", situation: 8, text: "Sobre las transformaciones geométricas, indica V o F:", statements: ["La reflexión de P en la recta y=1 conserva forma y tamaño de la figura.", "La rotación de 90° alrededor del punto (-1,1) modifica las longitudes de los lados."] }
+        ];
+
+        // APERTURA DE MODALES
+        function abrirSituacion(id) {
+            const data = situationsData[id];
+            if(data) {
+                document.getElementById('modal-title').innerText = data.title;
+                document.getElementById('modal-content').innerHTML = data.content;
+                document.getElementById('situation-modal').classList.remove('hidden');
+            }
+        }
+
+        function cerrarSituacion() {
+            document.getElementById('situation-modal').classList.add('hidden');
+        }
+
+        // CONTROLADORES
+        function resetLista() {
+            document.getElementById('container-nombre').classList.add('hidden');
+            document.getElementById('sel-nombre').innerHTML = '';
+        }
+
+        async function buscarAlumnas() {
+            const gr = document.getElementById('sel-grado').value;
+            const sec = document.getElementById('sel-seccion').value;
+            if(!gr || !sec) return alert("Selecciona tu grado y sección.");
+            
+            document.getElementById('status-msg').classList.remove('hidden');
+            
+            try {
+                const res = await fetch(`${URL_SCRIPT}?action=getEstudiantes&grado=${gr}&seccion=${sec}`);
+                const data = await res.json();
+                document.getElementById('status-msg').classList.add('hidden');
+                
+                if(data.estudiantes && data.estudiantes.length > 0) {
+                    const sel = document.getElementById('sel-nombre');
+                    sel.innerHTML = '<option value="">Elige tu nombre</option>';
+                    data.estudiantes.forEach(name => sel.innerHTML += `<option value="${name}">${name}</option>`);
+                    document.getElementById('container-nombre').classList.remove('hidden');
+                } else {
+                    alert("No se encontraron estudiantes registradas.");
+                }
+            } catch (err) {
+                document.getElementById('status-msg').classList.add('hidden');
+                alert("Error de conexión. Verifica el enlace de Google Apps Script.");
+            }
+        }
+
+        function mostrarBienvenida() {
+            const nom = document.getElementById('sel-nombre').value;
+            if(!nom) return alert("Selecciona tu nombre de la lista.");
+            
+            studentData = {
+                grado: document.getElementById('sel-grado').value,
+                seccion: document.getElementById('sel-seccion').value,
+                nombre: nom
+            };
+
+            document.getElementById('screen-register').classList.add('hidden');
+            document.getElementById('screen-welcome').classList.remove('hidden');
+        }
+
+        function iniciarExamen() {
+            document.getElementById('exam-student-name').innerText = studentData.nombre;
+            document.getElementById('screen-welcome').classList.add('hidden');
+            document.getElementById('screen-exam').classList.remove('hidden');
+            
+            renderizarPreguntas();
+            dibujarGraficos();
+            iniciarTemporizador();
+        }
+
+        function renderizarPreguntas() {
+            const container = document.getElementById('questions-container');
+            let html = "";
+
+            questionsData.forEach(q => {
+                userAnswers["q" + q.id] = ""; 
+                let qBody = "";
+
+                if (q.type === "mc") {
+                    qBody = `<div class="space-y-2 mt-4">`;
+                    q.options.forEach((opt) => {
+                        const letter = opt.substring(0,1); // Extrae A, B, C, D
+                        qBody += `<label class="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-indigo-50 transition">
+                            <input type="radio" name="q${q.id}" value="${letter}" onchange="guardarRespuesta(${q.id}, '${letter}')" class="w-5 h-5 text-indigo-600">
+                            <span class="font-medium text-slate-700">${opt}</span>
+                        </label>`;
+                    });
+                    qBody += `</div>`;
+                } 
+                else if (q.type === "vf") {
+                    qBody = `<div class="mt-4 rounded-xl border border-slate-200 overflow-hidden"><table class="w-full text-sm">`;
+                    q.statements.forEach((st, idx) => {
+                        qBody += `<tr class="border-b border-slate-100 bg-slate-50">
+                            <td class="p-4 font-medium text-slate-700">${idx+1}. ${st}</td>
+                            <td class="p-4 text-center"><label class="cursor-pointer"><input type="radio" name="q${q.id}_s${idx}" value="V" onchange="guardarVF(${q.id})" class="radio-v"><div class="text-xs font-bold text-slate-400 mt-1">V</div></label></td>
+                            <td class="p-4 text-center"><label class="cursor-pointer"><input type="radio" name="q${q.id}_s${idx}" value="F" onchange="guardarVF(${q.id})" class="radio-f"><div class="text-xs font-bold text-slate-400 mt-1">F</div></label></td>
+                        </tr>`;
+                    });
+                    qBody += `</table></div>`;
+                }
+                else if (q.type === "open") {
+                    qBody = `<div class="mt-4">
+                        <input type="text" oninput="guardarRespuesta(${q.id}, this.value)" placeholder="Escribe tu respuesta aquí..." class="w-full p-4 border-2 border-slate-200 rounded-xl font-medium outline-none focus:border-indigo-500 bg-slate-50">
+                    </div>`;
+                }
+
+                let situationBtn = "";
+                if (q.situation) {
+                    situationBtn = `<button onclick="abrirSituacion(${q.situation})" class="mb-5 w-full md:w-auto bg-indigo-100 hover:bg-indigo-200 text-indigo-900 border border-indigo-200 font-extrabold py-3 px-6 rounded-xl flex items-center justify-center gap-3 transition shadow-sm">
+                        <span class="text-2xl leading-none">📖</span> Ver información de la ${situationsData[q.situation].title}
+                    </button>`;
+                }
+
+                html += `
+                <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200">
+                    ${situationBtn}
+                    <div class="flex items-start gap-4 mb-2">
+                        <div class="bg-slate-800 text-white font-black w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">${q.id}</div>
+                        <h3 class="text-lg font-bold text-slate-800">${q.text}</h3>
+                    </div>
+                    ${q.customHtml ? `<div class="mt-4 p-2 bg-white border border-slate-200 rounded-xl">${q.customHtml}</div>` : ""}
+                    ${qBody}
+                </div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // GUARDADO DE RESPUESTAS CRUDAS
+        function guardarRespuesta(id, val) {
+            userAnswers["q" + id] = val;
+        }
+
+        function guardarVF(id) {
+            const s0 = document.querySelector(`input[name="q${id}_s0"]:checked`);
+            const s1 = document.querySelector(`input[name="q${id}_s1"]:checked`);
+            let res = "";
+            if(s0) res += s0.value;
+            if(s1) res += (s0 ? "-" : "") + s1.value; 
+            userAnswers["q" + id] = res; // Ejemplo: "V-F"
+        }
+
+        // GRÁFICOS MATEMÁTICOS PARA LAS PREGUNTAS
+        function dibujarGraficos() {
+            if(document.getElementById('chartQ3')) {
+                new Chart(document.getElementById('chartQ3').getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: [0, 1, 2, 3, 4],
+                        datasets: [
+                            { label: 'Comunidad B', data: [0, 1500, 3000, 4500, 6000], borderColor: '#f43f5e', fill: false },
+                            { label: 'Comunidad A', data: [0, 960, 1920, 2880, 3840], borderColor: '#3b82f6', fill: false }
+                        ]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'top' } } }
+                });
+            }
+            if(document.getElementById('chartQ20')) {
+                new Chart(document.getElementById('chartQ20').getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: [0, 10, 20, 50],
+                        datasets: [{ label: 'Costo (S/)', data: [6.25, 28.25, 70.25, 188.06], borderColor: '#10b981', fill: false, tension: 0.1 }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } } }
+                });
+            }
+        }
+
+        // TEMPORIZADOR
+        function iniciarTemporizador() {
+            const display = document.getElementById('timer-display');
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                let m = Math.floor(timeLeft / 60);
+                let s = timeLeft % 60;
+                display.innerText = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+                
+                if (timeLeft <= 300) display.classList.replace('text-slate-400', 'text-red-500'); // 5 minutos
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    finalizarExamen(true);
+                }
+            }, 1000);
+        }
+
+        // ENVÍO DE DATOS A GOOGLE SHEETS
+        async function finalizarExamen(forzado = false) {
+            if(!forzado) {
+                const conf = confirm("¿Estás segura de enviar tus respuestas a la base de datos?");
+                if(!conf) return;
+            }
+            
+            clearInterval(timerInterval);
+            document.getElementById('screen-exam').classList.add('hidden');
+            document.getElementById('screen-end').classList.remove('hidden');
+
+            const payload = {
+                grado: studentData.grado,
+                seccion: studentData.seccion,
+                nombre: studentData.nombre,
+                respuestas: userAnswers
+            };
+
+            try {
+                const res = await fetch(URL_SCRIPT, {
+                    method: 'POST',
+                    mode: 'no-cors', 
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                document.getElementById('status-end-msg').innerText = "✅ Todo listo. Tus respuestas han sido procesadas.";
+                document.getElementById('status-end-msg').classList.replace('bg-indigo-50', 'bg-emerald-50');
+                document.getElementById('status-end-msg').classList.replace('text-indigo-600', 'text-emerald-700');
+            } catch(e) {
+                document.getElementById('status-end-msg').innerText = "⚠️ Ocurrió un problema de red enviando los datos.";
+            }
+        }
+    </script>
+</body>
+</html>
